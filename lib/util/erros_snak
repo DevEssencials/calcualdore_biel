@@ -1,0 +1,34 @@
+import 'package:flutter/material.dart';
+
+abstract class Failure {
+  final String message;
+  Failure(this.message);
+}
+
+// Falha para valores inválidos
+class InvalidValueFailure extends Failure {
+  InvalidValueFailure() : super('Valor inválido. Verifique os dados inseridos.');
+}
+
+// Falha para campo vazio
+class EmptyFieldFailure extends Failure {
+  EmptyFieldFailure() : super('O campo não pode ser vazio.');
+}
+
+// Falha para valores numéricos inválidos
+class NumericConversionFailure extends Failure {
+  NumericConversionFailure() : super('Não foi possível converter o valor em número.');
+}
+
+class Failures {
+  // Método para exibir o Snackbar com a mensagem do erro
+  static void showError(BuildContext context, Failure failure) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(failure.message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+}

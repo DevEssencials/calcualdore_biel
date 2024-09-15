@@ -1,39 +1,77 @@
+import 'package:calculadore_flutter/models/model_imc.dart';
+import 'package:calculadore_flutter/util/erros_snak';
+import 'package:calculadore_flutter/util/validator.dart';
+import 'package:calculadore_flutter/util/widgets.dart';
 import 'package:flutter/material.dart';
 
 class MyHomePage extends StatefulWidget {
+  
   const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  List<dynamic> buttons = [1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0, 'Enter'];
+class _MyHomePageState extends State<MyHomePage> with ValidatorTextField {
+  
+  List<dynamic> buttons = [1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0, 'Apagar'];
   final TextEditingController _controllerPeso = TextEditingController();
   final TextEditingController _controllerAlt = TextEditingController();
-  bool isAltura = false;
-  String imcResult = "";
+  late bool isAltura;
+  String? imcResult = "";
+  String classificacao = "Descubra seu IMC";
   final FocusNode _focusNodePeso = FocusNode();
   final FocusNode _focusNodeAltura = FocusNode();
   final FocusScopeNode _focusScopeNode = FocusScopeNode();  // Para gerenciar o escopo de foco
 
   void inserirValor(String buttao, TextEditingController campoSelecionado) {
     setState(() {
-      // Lógica para evitar entrada incorreta
-      if (buttao == 'Enter') {
-        _calcularIMC();
-        _focusScopeNode.unfocus(); // Desfoca todos os campos
+      if (buttao == 'Apagar') {
+        _apagarText(campoSelecionado);
       } else {
         if (buttao == '.' && campoSelecionado.text.contains('.')) {
-          return; // Evita múltiplos pontos
+          return;
         }
         campoSelecionado.text += buttao;
       }
     });
   }
 
-  void _calcularIMC() {
-    //calcular imc
+  void _apagarText(TextEditingController campoSelecionado) {
+    setState(() {
+      if (campoSelecionado.text.isNotEmpty) {
+        campoSelecionado.text = campoSelecionado.text.substring(0, campoSelecionado.text.length - 1);
+      }
+    });
+  }
+
+  void _calcularIMC(BuildContext cntx) {
+    
+    if(_controllerAlt.text.isEmpty){
+      Failures.showError(context, EmptyFieldFailure());
+      return;
+    }
+    if(_controllerPeso.text.isEmpty){
+      Failures.showError(context, EmptyFieldFailure());
+      return;
+    }
+    final double? peso = validateAndConvert(_controllerPeso.text);
+    final double? altura = validateAndConvert(_controllerAlt.text);
+    if (peso == null) {
+      Failures.showError(context, NumericConversionFailure());
+      return;
+    }
+
+    if (altura == null || altura <= 0) {
+      Failures.showError(context, InvalidValueFailure());
+      return;
+    }
+    setState(() {
+      final ModelImc modelImc = ModelImc(altura, peso);
+      double imc = modelImc.calcularImc(altura, peso);
+      imcResult = imc.toStringAsFixed(2);
+      classificacao = modelImc.verificarClassificacao(imc);
+    });
   }
 
   @override
@@ -55,85 +93,48 @@ class _MyHomePageState extends State<MyHomePage> {
             node: _focusScopeNode,  // Gerencia o foco dentro do escopo
             child: Column(
               children: [
-                // Imagem
-                Center(child: Image.asset('assets/images/skaterson.jpg')),
-                // Campo de Peso
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Peso: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextField(
-                          controller: _controllerPeso,
-                          decoration:
-                              const InputDecoration(hintText: "Digite seu peso "),
-                          keyboardType: TextInputType.none, // Desabilita teclado virtual
-                          focusNode: _focusNodePeso,  // Gerencia o foco manualmente
-                          onTap: () => setState(() {
-                            isAltura = false;
-                            _focusScopeNode.requestFocus(_focusNodePeso);  // Mantém o foco
-                          }),
-                        ),
-                      ),
-                    )
-                  ],
+                Text(
+                  classificacao,
+                  style: styleText(),
                 ),
-                // Campo de Altura
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Altura: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextField(
-                          controller: _controllerAlt,
-                          decoration:
-                              const InputDecoration(hintText: "Digite sua altura "),
-                          keyboardType: TextInputType.none, // Desabilita teclado virtual
-                          focusNode: _focusNodeAltura,  // Gerencia o foco manualmente
-                          onTap: () => setState(() {
-                            isAltura = true;
-                            _focusScopeNode.requestFocus(_focusNodeAltura);  // Mantém o foco
-                          }),
-                        ),
-                      ),
-                    )
-                  ],
+                espacamento(),
+                SizedBox(
+                  height: 150,
+                  width: 400,
+                  child: Center(
+                    child: Image.asset('assets/images/skaterson.jpg'),
+                  ),
                 ),
-                const SizedBox(
-                  height: 12.0,
+                customTextField(
+                  "Peso:  ",
+                  "Digite o peso",
+                  _controllerPeso,
+                  _focusNodePeso,
+                  () => setState(() {
+                    isAltura = false;
+                  }),
                 ),
-                // Exibição do IMC
+                customTextField(
+                  "Altura:",
+                  "Digite a altura",
+                  _controllerAlt,
+                  _focusNodeAltura,
+                  () => setState(() {
+                    isAltura = true;
+                  }),
+                ),
+                espacamento(),
                 Center(
                   child: Text(
                     "IMC: $imcResult",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: styleText(),
                   ),
                 ),
-                const SizedBox(
-                  height: 12.0,
-                ),
-                // Teclado numérico
+                espacamento(),
                 SizedBox(
-                  height: 200,
+                  height: 225,
                   child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      mainAxisExtent: 60.0,
-                      crossAxisSpacing: 3.0,
-                      mainAxisSpacing: 3.0,
-                    ),
+                    gridDelegate: gridDelegate(),
                     itemCount: buttons.length,
                     itemBuilder: (BuildContext ctx, index) {
                       return Container(
@@ -144,8 +145,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                         child: TextButton(
                           onPressed: () {
-                            inserirValor(buttons[index].toString(),
-                                (isAltura) ? _controllerAlt : _controllerPeso);
+                            inserirValor(
+                              buttons[index].toString(),
+                              (isAltura) ? _controllerAlt : _controllerPeso
+                            );
                           },
                           child: Text(
                             buttons[index].toString(),
@@ -156,6 +159,16 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                   ),
                 ),
+                ElevatedButton(
+                  onPressed: () => _calcularIMC(context),  // Chama a função para calcular o IMC
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                  ),
+                  child: const Text(
+                    "Calcular IMC",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                )
               ],
             ),
           ),
