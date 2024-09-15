@@ -17,6 +17,7 @@ class _MyHomePageState extends State<MyHomePage> with ValidatorTextField {
   List<dynamic> buttons = [1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0, 'Apagar'];
   final TextEditingController _controllerPeso = TextEditingController();
   final TextEditingController _controllerAlt = TextEditingController();
+  String image = "assets/images/skaterson.jpg";
   late bool isAltura;
   String? imcResult = "";
   String classificacao = "Descubra seu IMC";
@@ -70,9 +71,12 @@ class _MyHomePageState extends State<MyHomePage> with ValidatorTextField {
       final ModelImc modelImc = ModelImc(altura, peso);
       double imc = modelImc.calcularImc(altura, peso);
       imcResult = imc.toStringAsFixed(2);
-      classificacao = modelImc.verificarClassificacao(imc);
+      classificacao = modelImc.varificarClassificacao(imc);
+      image = modelImc.trocarImage(imc);
     });
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> with ValidatorTextField {
                   height: 150,
                   width: 400,
                   child: Center(
-                    child: Image.asset('assets/images/skaterson.jpg'),
+                    child: Image.asset(image),
                   ),
                 ),
                 customTextField(

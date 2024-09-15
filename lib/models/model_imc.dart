@@ -11,7 +11,35 @@ class ModelImc {
     return imc;
   }
 
-  String  verificarClassificacao(double imc){
+  String  trocarImage(double imc){
+    if(imc < 16){
+      return 'assets/images/esqueleto.jpg';
+    }
+    else if(imc > 16 && imc <17){
+      return "assets/images/esqueleto2.jpg";
+    }
+    else if(imc < 18.5){
+      return "assets/images/esqueleto_comendo.jpg";
+    }
+    else if(imc < 25){
+      return "assets/images/saudaver.jpg";
+    }
+    else if(imc < 30){
+      return "assets/images/brocando.png";
+    }
+    else if(imc < 35){
+      return "assets/images/on_beso.jpg";
+    }
+    else if(imc < 40){
+      return "assets/images/paitarolisso.png";
+    }
+    else if( imc >= 40){
+      return "assets/images/barriguitas.png";
+    }
+    return "assets/images/skaterson.jpg";
+  }
+
+  String  varificarClassificacao(double imc){
     if(imc < 16){
       return "Magreza grau 3";
     }
@@ -39,3 +67,7 @@ class ModelImc {
     return "Erro ao classificar";
   }
 }
+
+
+
+    
